@@ -1,4 +1,7 @@
 use reqwest::Url;
+use std::env::home_dir;
+use std::fs;
+use std::path::PathBuf;
 use std::sync::LazyLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -12,7 +15,8 @@ pub const USER_AGENT: &'static str = "cp-tools/0.1.0";
 pub const ATCODER_DOMAIN: LazyLock<Url> =
     LazyLock::new(|| Url::parse("https://atcoder.jp/").unwrap());
 
-pub const WORKSPACE_DIR_NAME: &'static str = ".cp-tools";
+pub const PROJECT_DIR_NAME: &'static str = ".cp-tools";
+pub const CPP_FACADE_DIR_NAME: &'static str = "cpp_facade_files";
 
 pub fn get_ms_since_unix() -> u128 {
     SystemTime::now()
@@ -29,4 +33,18 @@ pub fn get_atcoder_task_url(task_id: &str) -> anyhow::Result<Url> {
         .join(&format!("{}/", contest_id))?
         .join("tasks/")?
         .join(&format!("{}/", task_id))?)
+}
+
+pub fn assume_home_dir() -> PathBuf {
+    home_dir().expect("failed to get home dir")
+}
+
+pub fn assume_project_dir() {
+    fs::create_dir(assume_home_dir().join(PROJECT_DIR_NAME)).ok();
+    fs::create_dir(
+        assume_home_dir()
+            .join(PROJECT_DIR_NAME)
+            .join(CPP_FACADE_DIR_NAME),
+    )
+    .ok();
 }

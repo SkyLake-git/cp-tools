@@ -1,5 +1,5 @@
 use crate::config::settings::Settings;
-use crate::constants::WORKSPACE_DIR_NAME;
+use crate::constants::PROJECT_DIR_NAME;
 use crate::def::testcase::TestcaseUnit;
 use crate::tester::judge::{ApproxFloatUnitJudger, MatchUnitJudger, SelectUnitJudge, UnitJudge};
 use crate::tester::suite::TestSuite;
@@ -17,15 +17,15 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn init(path: PathBuf) {
-        fs::create_dir(path.join(WORKSPACE_DIR_NAME)).ok();
+        fs::create_dir(path.join(PROJECT_DIR_NAME)).ok();
         fs::write(
-            path.join(WORKSPACE_DIR_NAME).join(WORKSPACE_SETTINGS_FN),
+            path.join(PROJECT_DIR_NAME).join(WORKSPACE_SETTINGS_FN),
             toml::to_string(&Settings::default()).expect("failed to serialize settings"),
         )
         .expect("failed to write settings");
     }
     pub fn load(path: PathBuf) -> anyhow::Result<Self> {
-        let r = fs::read_to_string(path.join(WORKSPACE_DIR_NAME).join(WORKSPACE_SETTINGS_FN))?;
+        let r = fs::read_to_string(path.join(PROJECT_DIR_NAME).join(WORKSPACE_SETTINGS_FN))?;
         Ok(Self {
             path,
             settings: toml::from_str(&r)?,
@@ -36,7 +36,7 @@ impl Workspace {
     pub fn save_test_suite(&mut self, suite: &TestSuite) {
         fs::write(
             self.path
-                .join(WORKSPACE_DIR_NAME)
+                .join(PROJECT_DIR_NAME)
                 .join(WORKSPACE_TESTCASES_FN),
             toml::to_string(suite).expect("failed to serialize settings"),
         )
@@ -50,7 +50,7 @@ impl Workspace {
 
         let r = fs::read_to_string(
             self.path
-                .join(WORKSPACE_DIR_NAME)
+                .join(PROJECT_DIR_NAME)
                 .join(WORKSPACE_TESTCASES_FN),
         )?;
 

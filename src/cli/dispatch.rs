@@ -49,21 +49,23 @@ pub fn dispatch_test(mut workspace: Workspace) -> anyhow::Result<()> {
             spinner.tick();
         }
         TestProgressEvent::Wait { elapsed_ms } => {
-            let res: TestResult;
-            if elapsed_ms >= suite.time_limit {
-                res = TestResult::TimeLimitExceeded;
-            } else {
-                res = TestResult::WaitingJudge;
-            }
-            let judge_msg = format!(
-                "Judging... {:>4} ms",
-                ((elapsed_ms as f64 / 100.0).round() * 100.0) as u128
-            );
-            let judge_gradient = gradient_string(judge_msg.as_str(), elapsed_ms as f32 / 1200.0);
-            let msg = format!("{} ┃ {}", judge_gradient, res);
-            spinner.set_message(msg);
-
             if elapsed_ms - last_ticked.get() >= 10 {
+                let res: TestResult;
+                if elapsed_ms >= suite.time_limit {
+                    res = TestResult::TimeLimitExceeded;
+                } else {
+                    res = TestResult::WaitingJudge;
+                }
+
+                let judge_msg = format!(
+                    "Judging... {:>4} ms",
+                    ((elapsed_ms as f64 / 100.0).round() * 100.0) as u128
+                );
+                let judge_gradient =
+                    gradient_string(judge_msg.as_str(), elapsed_ms as f32 / 1200.0);
+                let msg = format!("{} ┃ {}", judge_gradient, res);
+                spinner.set_message(msg);
+
                 spinner.tick();
                 last_ticked.set(elapsed_ms);
             }
