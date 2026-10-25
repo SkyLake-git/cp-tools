@@ -8,6 +8,7 @@ pub mod format;
 pub mod modern_log;
 pub mod tester;
 pub mod usecase;
+pub mod utils;
 
 use crate::cli::dispatch::{dispatch_start, dispatch_test};
 use crate::modern_log::{recv_input, status, write_status};
@@ -38,10 +39,7 @@ enum Commands {
     Test,
 
     /// Submit source code
-    Submit {
-        #[arg(short, long)]
-        source: String,
-    },
+    Submit { source: String },
 
     /// Watch submission status
     Watch,
@@ -87,12 +85,8 @@ fn main() -> Result<()> {
         Commands::Test => {
             exec_workspace(pwd, |workspace: Workspace| dispatch_test(workspace))?;
         }
-        Commands::Submit { source } => {
-            println!("Submitting {source}...");
-        }
-        Commands::Watch => {
-            println!("Watching submission status...");
-        }
+        Commands::Submit { source } => {}
+        Commands::Watch => {}
     }
 
     Ok(())
