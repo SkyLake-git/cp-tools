@@ -317,30 +317,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
-name = "cargo-cp-tools"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "console",
- "dialoguer",
- "glob",
- "indicatif",
- "keyring",
- "owo-colors",
- "pathdiff",
- "regex",
- "reqwest",
- "scraper",
- "secrecy",
- "serde",
- "terminal_size",
- "toml",
- "unicode-segmentation",
- "unicode-width",
-]
-
-[[package]]
 name = "cbc"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -552,6 +528,30 @@ name = "core_detect"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f8f80099a98041a3d1622845c271458a2d73e688351bf3cb999266764b81d48"
+
+[[package]]
+name = "cp-tools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "console",
+ "dialoguer",
+ "glob",
+ "indicatif",
+ "keyring",
+ "owo-colors",
+ "pathdiff",
+ "regex",
+ "reqwest",
+ "scraper",
+ "secrecy",
+ "serde",
+ "terminal_size",
+ "toml",
+ "unicode-segmentation",
+ "unicode-width",
+]
 
 [[package]]
 name = "cpubits"
