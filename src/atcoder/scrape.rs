@@ -6,10 +6,14 @@ use anyhow::{Context, anyhow, bail};
 use reqwest::Url;
 use reqwest::blocking::Client;
 use scraper::{ElementRef, Html, Selector};
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, SecretString};
 use std::collections::BTreeMap;
 use std::sync::LazyLock;
 use std::time::Duration;
+
+pub fn make_cookie_from(session: &SecretString) -> String {
+    format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
+}
 
 static COOKIE: LazyLock<String> = LazyLock::new(|| {
     let session = fetch_atcoder()
@@ -19,7 +23,7 @@ static COOKIE: LazyLock<String> = LazyLock::new(|| {
     format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
 });
 
-pub fn is_logged_in() -> anyhow::Result<bool> {
+pub fn is_logged_in(cookie: String) -> anyhow::Result<bool> {
     let client = Client::builder()
         .user_agent(USER_AGENT)
         .timeout(Duration::from_secs(15))
@@ -27,7 +31,7 @@ pub fn is_logged_in() -> anyhow::Result<bool> {
         .context("Failed to create HTTP client")?;
     let response = client
         .get(ATCODER_DOMAIN.join("settings/")?)
-        .header(reqwest::header::COOKIE, COOKIE.as_str())
+        .header(reqwest::header::COOKIE, &cookie)
         .send()
         .context("Failed to access AtCoder settings")?
         .error_for_status()

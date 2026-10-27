@@ -1,10 +1,15 @@
+use crate::constants::CPP_FACADE_DIR_NAME;
 use crate::utils::is_directory;
 use glob::glob;
 use regex::Regex;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::LazyLock;
 
-pub fn fetch_gcc_includes() -> Vec<PathBuf> {
+pub static GCC_INCLUDE_DIRECTORIES: LazyLock<Vec<PathBuf>> =
+    LazyLock::new(|| fetch_gcc_include_directories());
+
+pub fn fetch_gcc_include_directories() -> Vec<PathBuf> {
     let output = Command::new("g++")
         .arg("-E")
         .arg("-Wp,-v")
@@ -31,8 +36,12 @@ pub fn fetch_gcc_includes() -> Vec<PathBuf> {
         }
     }
 
+    find_directories
+}
+
+pub fn glob_gcc_includes() -> Vec<PathBuf> {
     let mut includes: Vec<PathBuf> = vec![];
-    for dir in find_directories {
+    for dir in (*GCC_INCLUDE_DIRECTORIES).clone() {
         for f in glob(dir.clone().join("**/*").display().to_string().as_str())
             .unwrap()
             .filter_map(Result::ok)
@@ -45,4 +54,15 @@ pub fn fetch_gcc_includes() -> Vec<PathBuf> {
     }
 
     includes
+}
+
+pub fn make_expand_compiler_args<'ca>() -> Vec<&'ca str> {
+    vec![
+        "-nostdinc",
+        "-nostdinc++",
+        "-CC",
+        "-P",
+        "-I",
+        CPP_FACADE_DIR_NAME,
+    ]
 }

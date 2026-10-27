@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub struct Settings {
     pub general: GeneralSettings,
     pub paths: PathSettings,
+    pub language: LanguageSettings,
     pub tester: TesterSettings,
     pub atcoder: AtCoderSettings,
 }
@@ -25,6 +26,20 @@ pub struct GeneralSettings {
 pub struct PathSettings {
     pub source: PathBuf,
     pub executable: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct LanguageSettings {
+    pub cpp: CppSettings,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct CppSettings {
+    pub expand_include: bool,
+    pub opt_begin_end: bool,
+    pub opt_range_no_new_lines: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,6 +62,7 @@ impl Default for Settings {
         Self {
             general: GeneralSettings::default(),
             paths: PathSettings::default(),
+            language: LanguageSettings::default(),
             tester: TesterSettings::default(),
             atcoder: AtCoderSettings::default(),
         }
@@ -68,6 +84,23 @@ impl Default for PathSettings {
         Self {
             source: PathBuf::from("./main.cpp"),
             executable: PathBuf::from("./main"),
+        }
+    }
+}
+
+impl Default for LanguageSettings {
+    fn default() -> Self {
+        Self {
+            cpp: CppSettings::default(),
+        }
+    }
+}
+impl Default for CppSettings {
+    fn default() -> Self {
+        Self {
+            expand_include: false,
+            opt_begin_end: false,
+            opt_range_no_new_lines: false,
         }
     }
 }

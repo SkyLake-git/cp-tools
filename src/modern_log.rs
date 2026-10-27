@@ -16,6 +16,10 @@ pub fn write_status(head: impl Display, msg: impl Display) {
     print!("{}{:>12} {}", project_header(), head, msg);
 }
 
+pub fn format_status(head: impl Display, msg: impl Display) -> String {
+    format!("{}{:>12} {}", project_header(), head, msg)
+}
+
 pub fn recv_input() -> anyhow::Result<String> {
     let mut s = String::new();
     io::stdout().flush()?;
