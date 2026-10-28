@@ -5,9 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+arboard = { version = "3.7.0", default-features = false, features = ["wl-clipboard-rs", "wayland-data-control"] }
 clap = { version = "4.6.7", features = ["derive"] }
 console = "0.16.6"
 dialoguer = "0.12.0"
+fancy-regex = "0.20.0"
 glob = "0.3.4"
 indicatif = "0.18.6"
 keyring = "4.2.0"
@@ -21,4 +23,4 @@ serde = { version = "1.0.229", features = ["derive"] }
 terminal_size = "0.4.4"
 toml = "1.1.8"
 unicode-segmentation = "1.13.3"
-unicode-width = "0.2.2"
+unicode-width = "0.2.3"

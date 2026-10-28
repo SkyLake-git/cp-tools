@@ -115,3 +115,75 @@ pub fn gradient_string(text: &str, phase: f32) -> String {
     output.push_str("\x1b[0m");
     output
 }
+
+use indicatif::ProgressBar;
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    thread::{self, JoinHandle},
+    time::Duration,
+};
+
+pub trait GradientTick {
+    fn enable_gradient_tick(
+        &self,
+        text: impl Into<String>,
+        interval: Duration,
+    ) -> GradientTickHandle;
+}
+
+pub struct GradientTickHandle {
+    stop: Arc<AtomicBool>,
+    thread: Option<JoinHandle<()>>,
+}
+
+impl GradientTickHandle {
+    pub fn stop(mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
+    }
+}
+
+impl Drop for GradientTickHandle {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
+    }
+}
+
+impl GradientTick for ProgressBar {
+    fn enable_gradient_tick(
+        &self,
+        text: impl Into<String>,
+        interval: Duration,
+    ) -> GradientTickHandle {
+        let pb = self.clone();
+        let text = text.into();
+        let stop = Arc::new(AtomicBool::new(false));
+        let stop_thread = Arc::clone(&stop);
+
+        let thread = thread::spawn(move || {
+            let mut phase = 0.0_f32;
+
+            while !stop_thread.load(Ordering::Relaxed) && !pb.is_finished() {
+                pb.set_message(gradient_string(&text, phase));
+                phase = (phase + 0.015).rem_euclid(1.0);
+
+                thread::sleep(interval);
+            }
+        });
+
+        GradientTickHandle {
+            stop,
+            thread: Some(thread),
+        }
+    }
+}

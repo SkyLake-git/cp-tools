@@ -1,6 +1,5 @@
 use crate::constants::{CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, assume_home_dir};
 use crate::format::cpp::expand::make_expand_compiler_args;
-use crate::usecase::workspace::Workspace;
 use anyhow::bail;
 use regex::Regex;
 use std::fs;
@@ -29,14 +28,18 @@ pub fn detect_original_includes(source_code: &str) -> Vec<String> {
     detected
 }
 
-pub fn gcc_preprocess(source_code: &str, working_dir: PathBuf) -> anyhow::Result<String> {
+pub fn gcc_preprocess(source_code: &str, include_dirs: Vec<PathBuf>) -> anyhow::Result<String> {
     let options: Vec<&str> = make_expand_compiler_args();
+    let mut path_options: Vec<String> = vec![];
+    for path in include_dirs {
+        path_options.push("-isystem".to_owned());
+        path_options.push(format!("{}", path.display()));
+    }
     let mut cmd = Command::new("g++")
         .arg("-E")
         .arg("-x")
         .arg("c++")
-        .arg("-isystem")
-        .arg(working_dir)
+        .args(path_options)
         .arg("-D")
         .arg("ONLINE_JUDGE")
         .arg("-D")
@@ -69,8 +72,4 @@ pub fn gcc_preprocess(source_code: &str, working_dir: PathBuf) -> anyhow::Result
     let res = original_includes.join("\n") + "\n" + &stdout;
 
     Ok(res)
-}
-
-pub fn cpp_format(workspace: &Workspace, source_code: &str) -> anyhow::Result<String> {
-    todo!();
 }

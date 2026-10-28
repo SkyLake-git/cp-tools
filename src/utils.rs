@@ -18,7 +18,7 @@ fn touch(path: impl AsRef<Path>) -> io::Result<()> {
     Ok(())
 }
 
-pub fn touch_files_relative(base: PathBuf, files: Vec<PathBuf>) {
+pub fn touch_files_relative(base: PathBuf, files: Vec<PathBuf>, callback: impl Fn(&PathBuf)) {
     for f in files {
         let path = base.join(f);
         if path.has_root()
@@ -27,6 +27,7 @@ pub fn touch_files_relative(base: PathBuf, files: Vec<PathBuf>) {
         {
             fs::create_dir_all(parent).ok();
         }
-        touch(path).expect("failed to touch file")
+        touch(&path).expect("failed to touch file");
+        callback(&path);
     }
 }
