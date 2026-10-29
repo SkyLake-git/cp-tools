@@ -17,11 +17,11 @@ pub fn detect_original_includes(source_code: &str) -> Vec<String> {
         .join(CPP_FACADE_DIR_NAME);
 
     for cap in captures {
-        let v = cap[0].trim();
+        let v = cap[1].trim();
         if let Ok(exists) = fs::exists(base.join(v))
             && exists
         {
-            detected.push(v.to_owned());
+            detected.push(cap[0].trim().to_owned());
         }
     }
 
@@ -29,7 +29,7 @@ pub fn detect_original_includes(source_code: &str) -> Vec<String> {
 }
 
 pub fn gcc_preprocess(source_code: &str, include_dirs: Vec<PathBuf>) -> anyhow::Result<String> {
-    let options: Vec<&str> = make_expand_compiler_args();
+    let options: Vec<String> = make_expand_compiler_args();
     let mut path_options: Vec<String> = vec![];
     for path in include_dirs {
         path_options.push("-isystem".to_owned());
@@ -65,7 +65,7 @@ pub fn gcc_preprocess(source_code: &str, include_dirs: Vec<PathBuf>) -> anyhow::
     let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
 
     if !stderr.trim().is_empty() {
-        bail!("failed to preprocess source code");
+        bail!("failed to preprocess source code: ".to_owned() + stderr.trim());
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout).into_owned();

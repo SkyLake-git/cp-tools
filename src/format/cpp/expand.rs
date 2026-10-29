@@ -1,4 +1,4 @@
-use crate::constants::CPP_FACADE_DIR_NAME;
+use crate::constants::{CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, assume_home_dir};
 use crate::utils::is_directory;
 use glob::glob;
 use regex::Regex;
@@ -56,13 +56,20 @@ pub fn glob_gcc_includes() -> Vec<PathBuf> {
     includes
 }
 
-pub fn make_expand_compiler_args<'ca>() -> Vec<&'ca str> {
+pub fn make_expand_compiler_args() -> Vec<String> {
     vec![
-        "-nostdinc",
-        "-nostdinc++",
-        "-CC",
-        "-P",
-        "-I",
-        CPP_FACADE_DIR_NAME,
+        "-nostdinc".to_owned(),
+        "-nostdinc++".to_owned(),
+        "-CC".to_owned(),
+        "-P".to_owned(),
+        "-I".to_owned(),
+        format!(
+            "{}",
+            assume_home_dir()
+                .join(PROJECT_DIR_NAME)
+                .join(CPP_FACADE_DIR_NAME)
+                .display()
+        )
+        .to_owned(),
     ]
 }
