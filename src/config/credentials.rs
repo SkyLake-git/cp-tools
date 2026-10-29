@@ -15,8 +15,6 @@ impl AtCoderCredentials {
 }
 
 pub fn fetch_atcoder() -> Result<AtCoderCredentials, Error> {
-    use_native_store(false)?;
-    eprintln!("keyring store: {}", store_info());
     let entry = Entry::new(SERVICE_NAME, ATCODER_ACC_NAME)?;
 
     Ok(AtCoderCredentials::new(SecretString::from(
@@ -25,8 +23,6 @@ pub fn fetch_atcoder() -> Result<AtCoderCredentials, Error> {
 }
 
 pub fn save_atcoder(cred: AtCoderCredentials) -> Result<(), Error> {
-    use_native_store(false)?;
-    eprintln!("keyring store: {}", store_info());
     let entry = Entry::new(SERVICE_NAME, ATCODER_ACC_NAME)?;
 
     entry.set_password(cred.revel_session.expose_secret())?;
@@ -34,8 +30,6 @@ pub fn save_atcoder(cred: AtCoderCredentials) -> Result<(), Error> {
 }
 
 pub fn delete_atcoder() -> Result<(), Error> {
-    use_native_store(false)?;
-    eprintln!("keyring store: {}", store_info());
     let entry = Entry::new(SERVICE_NAME, ATCODER_ACC_NAME)?;
 
     entry.delete_credential()?;
