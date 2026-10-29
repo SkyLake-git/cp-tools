@@ -103,11 +103,11 @@ fn main() -> Result<()> {
             if let Ok(logged_in) = is_logged_in(make_cookie_from(&session))
                 && logged_in
             {
+                save_atcoder(AtCoderCredentials::new(session))?;
                 status(
                     "Succeeded".bright_green().bold(),
                     "saved your session token",
                 );
-                save_atcoder(AtCoderCredentials::new(session))?;
             } else {
                 status(
                     "Failed".bright_red().bold(),
