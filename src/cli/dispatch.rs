@@ -2,6 +2,7 @@ use crate::cli::express::print_testcase_result;
 use crate::config::settings::FormatOutMethod;
 use crate::constants::{
     CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, SMOOTH_PROGRESS_CHARS, assume_home_dir,
+    assume_project_dir,
 };
 use crate::def::contest_type::ContestType;
 use crate::format::cpp::expand::glob_gcc_includes;
@@ -17,9 +18,9 @@ use arboard::Clipboard;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use std::cell::Cell;
+use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
-use std::fs;
 
 /// super hardcode-er
 /// todo: fetch from github?, get from system?
@@ -81,7 +82,7 @@ pub fn dispatch_start(mut workspace: Workspace, task_id: &str) -> anyhow::Result
     Ok(())
 }
 
-pub fn initialize_gcc_facades(workspace: Workspace) -> anyhow::Result<()> {
+pub fn initialize_gcc_facades(workspace: &Workspace) -> anyhow::Result<()> {
     let spinner = ProgressBar::new_spinner();
     spinner.set_style(ProgressStyle::with_template("{msg}")?);
     let handler =
@@ -129,9 +130,32 @@ pub fn initialize_gcc_facades(workspace: Workspace) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn dispatch_purge() -> anyhow::Result<()> {
+    assume_project_dir();
+    status("Purging".bright_green().bold(), "gcc facades");
+    fs::remove_dir_all(
+        &assume_home_dir()
+            .join(PROJECT_DIR_NAME)
+            .join(CPP_FACADE_DIR_NAME),
+    )
+    .ok();
+
+    status("Succeeded".bright_green().bold(), "purged cp-tools files");
+    Ok(())
+}
+
 pub fn dispatch_format(workspace: Workspace) -> anyhow::Result<()> {
     if !fs::exists(&workspace.settings.paths.source)? {
         bail!("source file doesn't exists");
+    }
+
+    if !fs::exists(
+        &assume_home_dir()
+            .join(PROJECT_DIR_NAME)
+            .join(CPP_FACADE_DIR_NAME),
+    )? {
+        status("Initializing".bright_green().bold(), "gcc facades");
+        initialize_gcc_facades(&workspace)?;
     }
 
     let source_code = fs::read_to_string(&workspace.settings.paths.source)?.replace("\r\n", "\n");

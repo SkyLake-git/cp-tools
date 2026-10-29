@@ -11,9 +11,7 @@ pub mod usecase;
 pub mod utils;
 
 use crate::atcoder::scrape::{is_logged_in, make_cookie_from};
-use crate::cli::dispatch::{
-    dispatch_format, dispatch_start, dispatch_test,
-};
+use crate::cli::dispatch::{dispatch_format, dispatch_purge, dispatch_start, dispatch_test};
 use crate::config::credentials::{AtCoderCredentials, delete_atcoder, save_atcoder};
 use crate::constants::assume_project_dir;
 use crate::modern_log::{format_status, recv_input, status, write_status};
@@ -48,6 +46,9 @@ enum Commands {
     },
 
     Format {},
+
+    /// Purge cp-tools files
+    Purge {},
 
     /// Run downloaded test cases
     Test,
@@ -139,6 +140,7 @@ fn main() -> Result<()> {
         Commands::Format {} => {
             exec_workspace(pwd, |workspace: Workspace| dispatch_format(workspace))?;
         }
+        Commands::Purge {} => dispatch_purge()?,
         Commands::Test => {
             exec_workspace(pwd, |workspace: Workspace| dispatch_test(workspace))?;
         }

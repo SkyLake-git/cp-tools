@@ -578,7 +578,6 @@ dependencies = [
  "anyhow",
  "arboard",
  "clap",
- "console",
  "dialoguer",
  "fancy-regex",
  "glob",

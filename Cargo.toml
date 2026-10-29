@@ -7,7 +7,6 @@ edition = "2024"
 anyhow = "1.0.104"
 arboard = { version = "3.7.0", default-features = false, features = ["wl-clipboard-rs", "wayland-data-control"] }
 clap = { version = "4.6.7", features = ["derive"] }
-console = "0.16.6"
 dialoguer = "0.12.0"
 fancy-regex = "0.20.0"
 glob = "0.3.4"

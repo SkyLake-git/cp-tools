@@ -41,10 +41,4 @@ pub fn assume_home_dir() -> PathBuf {
 
 pub fn assume_project_dir() {
     fs::create_dir(assume_home_dir().join(PROJECT_DIR_NAME)).ok();
-    fs::create_dir(
-        assume_home_dir()
-            .join(PROJECT_DIR_NAME)
-            .join(CPP_FACADE_DIR_NAME),
-    )
-    .ok();
 }
