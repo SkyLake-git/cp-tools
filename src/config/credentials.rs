@@ -1,4 +1,4 @@
-use keyring::{Entry, Error, store_info, use_native_store};
+use keyring::{Entry, Error};
 use secrecy::{ExposeSecret, SecretString};
 
 const SERVICE_NAME: &str = "cp-tools";
