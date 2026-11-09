@@ -2,7 +2,7 @@ use crate::cli::express::print_testcase_result;
 use crate::config::settings::FormatOutMethod;
 use crate::constants::{
     CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, SMOOTH_PROGRESS_CHARS, assume_home_dir,
-    assume_project_dir,
+    assume_project_dir, get_ms_since_unix,
 };
 use crate::def::contest_type::ContestType;
 use crate::format::cpp::expand::glob_gcc_includes;
@@ -24,6 +24,7 @@ use std::time::Duration;
 
 /// super hardcode-er
 /// todo: fetch from github?, get from system?
+/// todo: move these to usecase
 static ATCODER_ACL_PATHS: &[&str] = &[
     "atcoder/all",
     "atcoder/all.hpp",
@@ -121,6 +122,7 @@ pub fn initialize_gcc_facades(workspace: &Workspace) -> anyhow::Result<()> {
             "{}",
             pathdiff::diff_paths(&p, &base_path).unwrap().display()
         ));
+        spinner.tick();
     });
 
     drop(handler);
@@ -158,8 +160,15 @@ pub fn dispatch_format(workspace: Workspace) -> anyhow::Result<()> {
         initialize_gcc_facades(&workspace)?;
     }
 
-    let source_code = fs::read_to_string(&workspace.settings.paths.source)?.replace("\r\n", "\n");
+    let source_code = workspace.read_source_code();
+    status("Formatting".bright_green().bold(), "the source code");
+    let start_ms = get_ms_since_unix();
     let arranged_source_code = format_source_code(&workspace, &source_code)?;
+    let took_ms = get_ms_since_unix() - start_ms;
+    status(
+        "Finished".bright_green().bold(),
+        format!("formatted code in {took_ms}ms"),
+    );
 
     match &workspace.settings.format.out.method {
         FormatOutMethod::Clipboard => {

@@ -1,5 +1,5 @@
 use crate::atcoder::scrape::fetch_testcases;
-use crate::constants::get_atcoder_task_url;
+use crate::atcoder::session::get_atcoder_task_url;
 use crate::tester::suite::TestSuite;
 use crate::usecase::workspace::Workspace;
 

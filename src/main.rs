@@ -10,7 +10,7 @@ pub mod tester;
 pub mod usecase;
 pub mod utils;
 
-use crate::atcoder::scrape::{is_logged_in, make_cookie_from};
+use crate::atcoder::session::{is_logged_in, make_cookie_from};
 use crate::cli::dispatch::{dispatch_format, dispatch_purge, dispatch_start, dispatch_test};
 use crate::config::credentials::{AtCoderCredentials, delete_atcoder, save_atcoder};
 use crate::constants::assume_project_dir;
@@ -37,14 +37,16 @@ enum Commands {
     /// Initialize cp-tools environment
     Init,
 
+    /// Login to competition site
     Login,
+
+    /// Logout from competition site
     Logout,
 
     /// Start task
-    Start {
-        task_id: Option<String>,
-    },
+    Start { task_id: Option<String> },
 
+    /// Format source code
     Format {},
 
     /// Purge cp-tools files
@@ -54,9 +56,7 @@ enum Commands {
     Test,
 
     /// Submit source code
-    Submit {
-        source: String,
-    },
+    Submit { source: String },
 
     /// Watch submission status
     Watch,

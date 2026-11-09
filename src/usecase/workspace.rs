@@ -60,6 +60,12 @@ impl Workspace {
 
         Ok(suite)
     }
+
+    pub fn read_source_code(&self) -> String {
+        fs::read_to_string(self.settings.paths.source.clone())
+            .expect("failed to read source file")
+            .replace("\r\n", "\n")
+    }
 }
 
 impl SelectUnitJudge for Workspace {

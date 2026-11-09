@@ -175,6 +175,7 @@ impl GradientTick for ProgressBar {
 
             while !stop_thread.load(Ordering::Relaxed) && !pb.is_finished() {
                 pb.set_message(gradient_string(&text, phase));
+                pb.tick();
                 phase = (phase + 0.015).rem_euclid(1.0);
 
                 thread::sleep(interval);

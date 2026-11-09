@@ -1,46 +1,11 @@
-use crate::config::credentials::fetch_atcoder;
-use crate::constants::{ATCODER_DOMAIN, USER_AGENT};
+use crate::atcoder::session::SESSION_COOKIE;
+use crate::constants::HTTP_CLIENT;
 use crate::def::testcase::Testcase;
 use crate::tester::suite::TestSuite;
 use anyhow::{Context, anyhow, bail};
 use reqwest::Url;
-use reqwest::blocking::Client;
 use scraper::{ElementRef, Html, Selector};
-use secrecy::{ExposeSecret, SecretString};
 use std::collections::BTreeMap;
-use std::sync::LazyLock;
-use std::time::Duration;
-
-pub fn make_cookie_from(session: &SecretString) -> String {
-    format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
-}
-
-static COOKIE: LazyLock<String> = LazyLock::new(|| {
-    let session = fetch_atcoder()
-        .expect("failed to fetch atcoder credentials")
-        .revel_session;
-
-    format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
-});
-
-pub fn is_logged_in(cookie: String) -> anyhow::Result<bool> {
-    let client = Client::builder()
-        .user_agent(USER_AGENT)
-        .timeout(Duration::from_secs(15))
-        .build()
-        .context("Failed to create HTTP client")?;
-    let response = client
-        .get(ATCODER_DOMAIN.join("settings/")?)
-        .header(reqwest::header::COOKIE, &cookie)
-        .send()
-        .context("Failed to access AtCoder settings")?
-        .error_for_status()
-        .context("AtCoder returned an unsuccessful HTTP status")?;
-
-    let final_url = response.url();
-
-    Ok(final_url.path() != "/login/" && final_url.path() == "/settings/")
-}
 
 pub fn fetch_testcases(parsed_url: &Url) -> anyhow::Result<TestSuite> {
     if parsed_url.scheme() != "https"
@@ -50,15 +15,9 @@ pub fn fetch_testcases(parsed_url: &Url) -> anyhow::Result<TestSuite> {
         bail!("Expected an AtCoder task URL: {parsed_url}");
     }
 
-    let client = Client::builder()
-        .user_agent(USER_AGENT)
-        .timeout(Duration::from_secs(15))
-        .build()
-        .context("Failed to create HTTP client")?;
-
-    let response = client
+    let response = HTTP_CLIENT
         .get(parsed_url.clone())
-        .header(reqwest::header::COOKIE, COOKIE.as_str())
+        .header(reqwest::header::COOKIE, SESSION_COOKIE.as_str())
         .send()
         .context("Failed to fetch problem page")?
         .error_for_status()
