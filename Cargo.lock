@@ -591,7 +591,6 @@ dependencies = [
  "scraper",
  "secrecy",
  "serde",
- "serde_json",
  "terminal_size",
  "toml",
  "unicode-segmentation",
