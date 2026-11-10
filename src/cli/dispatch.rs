@@ -194,10 +194,17 @@ pub fn dispatch_format(workspace: &Workspace, manual: bool) -> anyhow::Result<St
     Ok(arranged_source_code)
 }
 
-pub fn dispatch_submit(mut workspace: Workspace) -> anyhow::Result<()> {
+pub fn dispatch_submit(workspace: &Workspace, no_test: bool) -> anyhow::Result<()> {
+    if !no_test {
+        let result = dispatch_test(workspace)?;
+
+        if !result {
+            return Ok(());
+        }
+    }
     let source_code = dispatch_format(&workspace, true)?;
     status("Submitting".bright_green().bold(), "the source code");
-    if submit::run(&mut workspace, &source_code)? {
+    if submit::run(&workspace, &source_code)? {
         status("Successfully".bright_green().bold(), "submitted");
         // todo: watch
     } else {
@@ -210,7 +217,7 @@ pub fn dispatch_submit(mut workspace: Workspace) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn dispatch_test(mut workspace: Workspace) -> anyhow::Result<()> {
+pub fn dispatch_test(workspace: &Workspace) -> anyhow::Result<bool> {
     let spinner = ProgressBar::new_spinner();
     spinner.set_style(ProgressStyle::with_template("{msg}")?);
 
@@ -224,12 +231,12 @@ pub fn dispatch_test(mut workspace: Workspace) -> anyhow::Result<()> {
             "Failed".bright_red().bold(),
             "to load testcases, try run `start`",
         );
-        return Ok(());
+        return Ok(false);
     }
 
     let suite = fetch_res?;
 
-    test::run(&mut workspace, suite.clone(), |p| match p {
+    test::run(&workspace, suite.clone(), |p| match p {
         TestProgressEvent::Start { .. } => {
             spinner.set_message("Judging...");
             spinner.tick();
@@ -270,17 +277,27 @@ pub fn dispatch_test(mut workspace: Workspace) -> anyhow::Result<()> {
         }
     });
 
+    spinner.finish_and_clear();
+
     let mut head_str: String = "".to_owned();
     for r in &head_results {
         head_str.push_str(format!("{}  ", r).as_str());
     }
 
-    print!(
+    println!(
         "({}/{}) ┃ {} ┃",
         accepted_count,
         head_results.len(),
         head_str.trim()
     );
 
-    Ok(())
+    if accepted_count == head_results.len() {
+        println!();
+        println!("{}", "┃".bright_green().bold());
+        println!("{}", "┃ Fully Accepted, Good job".bright_green().bold());
+        println!("{}", "┃".bright_green().bold());
+        println!();
+    }
+
+    Ok(accepted_count == head_results.len())
 }

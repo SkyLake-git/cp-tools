@@ -11,7 +11,7 @@ pub enum TestProgressEvent<'ev> {
 }
 
 pub fn run(
-    workspace: &mut Workspace,
+    workspace: &Workspace,
     suite: TestSuite,
     mut progress_callback: impl FnMut(TestProgressEvent),
 ) -> TestSuiteResult {

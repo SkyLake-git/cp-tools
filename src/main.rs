@@ -58,7 +58,7 @@ enum Commands {
     Test,
 
     /// Submit source code
-    Submit,
+    Submit { no_test: Option<bool> },
 
     /// Watch submission status
     Watch,
@@ -147,10 +147,17 @@ fn main() -> Result<()> {
         }
         Commands::Purge {} => dispatch_purge()?,
         Commands::Test => {
-            exec_workspace(pwd, |workspace: Workspace| dispatch_test(workspace))?;
+            exec_workspace(pwd, |workspace: Workspace| {
+                dispatch_test(&workspace)?;
+                Ok(())
+            })?;
         }
-        Commands::Submit {} => {
-            exec_workspace(pwd, |workspace: Workspace| dispatch_submit(workspace))?;
+        Commands::Submit { no_test } => {
+            let no_test_val = no_test.unwrap_or(false);
+            exec_workspace(pwd, |workspace: Workspace| {
+                dispatch_submit(&workspace, no_test_val)?;
+                Ok(())
+            })?;
         }
         Commands::Watch => {}
     }

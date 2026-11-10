@@ -2,7 +2,6 @@ use crate::atcoder::session::{SESSION_COOKIE, SESSION_CSRF_TOKEN, get_atcoder_su
 use crate::constants::make_http_client;
 use crate::def::language::Language;
 use anyhow::Context;
-use reqwest::header::CONTENT_TYPE;
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -30,19 +29,12 @@ pub fn submit(problem_id: &str, language_id: u64, source_code: &str) -> anyhow::
         language_id,
         source_code: source_code.to_owned(),
     };
-    println!("{}", get_atcoder_submission_url(problem_id)?);
-    println!("{}", serde_json::to_string(&body)?);
-    let response = make_http_client(true)
+    let response = make_http_client(false)
         .post(get_atcoder_submission_url(problem_id)?)
-        .header(CONTENT_TYPE, "application/json")
-        .header(
-            reqwest::header::COOKIE,
-            SESSION_COOKIE.to_owned().to_string().as_str(),
-        )
-        .body(serde_json::to_string(&body)?)
+        .header(reqwest::header::COOKIE, SESSION_COOKIE.as_str())
+        .form(&body)
         .send()
         .context("Failed to post submission")?;
 
-    println!("{:#?}", response.text()?);
-    Ok(false)
+    Ok(response.status().is_redirection())
 }

@@ -12,7 +12,6 @@ pub const WORKSPACE_TESTCASES_FN: &'static str = "testcases.toml";
 pub struct Workspace {
     pub path: PathBuf,
     pub settings: Settings,
-    pub test_suite: Option<TestSuite>,
 }
 
 impl Workspace {
@@ -29,11 +28,10 @@ impl Workspace {
         Ok(Self {
             path,
             settings: toml::from_str(&r)?,
-            test_suite: None,
         })
     }
 
-    pub fn save_test_suite(&mut self, suite: &TestSuite) {
+    pub fn save_test_suite(&self, suite: &TestSuite) {
         fs::write(
             self.path
                 .join(PROJECT_DIR_NAME)
@@ -43,11 +41,7 @@ impl Workspace {
         .expect("failed to write file");
     }
 
-    pub fn fetch_test_suite(&mut self) -> anyhow::Result<TestSuite> {
-        if self.test_suite.is_some() {
-            return Ok(self.test_suite.as_mut().unwrap().clone());
-        }
-
+    pub fn fetch_test_suite(&self) -> anyhow::Result<TestSuite> {
         let r = fs::read_to_string(
             self.path
                 .join(PROJECT_DIR_NAME)
@@ -55,9 +49,6 @@ impl Workspace {
         )?;
 
         let suite: TestSuite = toml::from_str(&r).expect("failed to parse testcases");
-
-        self.test_suite.replace(suite.clone());
-
         Ok(suite)
     }
 

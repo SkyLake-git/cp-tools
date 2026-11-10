@@ -8,7 +8,7 @@ use secrecy::{ExposeSecret, SecretString};
 use std::sync::LazyLock;
 
 pub fn make_cookie_from(session: &SecretString) -> String {
-    format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
+    format!("REVEL_SESSION={};", session.expose_secret()).to_owned()
 }
 
 pub fn get_csrf_token(session: &SecretString) -> String {

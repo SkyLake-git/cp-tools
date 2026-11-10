@@ -3,7 +3,7 @@ use crate::def::contest_type::ContestType;
 use crate::usecase::workspace::Workspace;
 use anyhow::Context;
 
-pub fn run(workspace: &mut Workspace, source_code: &str) -> anyhow::Result<bool> {
+pub fn run(workspace: &Workspace, source_code: &str) -> anyhow::Result<bool> {
     let suite = workspace.fetch_test_suite()?;
     Ok(match workspace.settings.general.contest_type {
         ContestType::AtCoder => submit(

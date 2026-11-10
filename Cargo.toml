@@ -16,7 +16,7 @@ owo-colors = "4.4.0"
 pathdiff = "0.2.3"
 percent-encoding = "2.3.2"
 regex = "1.13.1"
-reqwest = { version = "0.13.5", features = ["blocking", "cookies", "json"] }
+reqwest = { version = "0.13.5", features = ["blocking", "cookies", "form"] }
 scraper = "0.29.0"
 secrecy = "0.10.3"
 serde = { version = "1.0.229", features = ["derive"] }
