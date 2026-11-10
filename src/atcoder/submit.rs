@@ -2,9 +2,10 @@ use crate::atcoder::session::{SESSION_COOKIE, SESSION_CSRF_TOKEN, get_atcoder_su
 use crate::constants::make_http_client;
 use crate::def::language::Language;
 use anyhow::Context;
+use reqwest::header::CONTENT_TYPE;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct AtCoderSubmissionBody {
     csrf_token: String,
     #[serde(rename = "data.TaskScreenName")]
@@ -29,14 +30,19 @@ pub fn submit(problem_id: &str, language_id: u64, source_code: &str) -> anyhow::
         language_id,
         source_code: source_code.to_owned(),
     };
-    let response = make_http_client(false)
+    println!("{}", get_atcoder_submission_url(problem_id)?);
+    println!("{}", serde_json::to_string(&body)?);
+    let response = make_http_client(true)
         .post(get_atcoder_submission_url(problem_id)?)
-        .json(&body)
-        .header(reqwest::header::COOKIE, SESSION_COOKIE.as_str())
+        .header(CONTENT_TYPE, "application/json")
+        .header(
+            reqwest::header::COOKIE,
+            SESSION_COOKIE.to_owned().to_string().as_str(),
+        )
+        .body(serde_json::to_string(&body)?)
         .send()
-        .context("Failed to post submission")?
-        .error_for_status()
-        .context("AtCoder returned an unsuccessful HTTP status")?;
+        .context("Failed to post submission")?;
 
-    Ok(response.status().is_redirection())
+    println!("{:#?}", response.text()?);
+    Ok(false)
 }

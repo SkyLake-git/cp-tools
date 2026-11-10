@@ -68,7 +68,7 @@ pub fn gcc_preprocess(source_code: &str, include_dirs: Vec<PathBuf>) -> anyhow::
         bail!("failed to preprocess source code: ".to_owned() + stderr.trim());
     }
 
-    let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+    let stdout = String::from_utf8_lossy(&output.stdout).replace("\r\n", "\n");
     let res = original_includes.join("\n") + "\n" + &stdout;
 
     Ok(res)

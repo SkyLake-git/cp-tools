@@ -11,7 +11,9 @@ pub mod usecase;
 pub mod utils;
 
 use crate::atcoder::session::{is_logged_in, make_cookie_from};
-use crate::cli::dispatch::{dispatch_format, dispatch_purge, dispatch_start, dispatch_test};
+use crate::cli::dispatch::{
+    dispatch_format, dispatch_purge, dispatch_start, dispatch_submit, dispatch_test,
+};
 use crate::config::credentials::{AtCoderCredentials, delete_atcoder, save_atcoder};
 use crate::constants::assume_project_dir;
 use crate::modern_log::{format_status, recv_input, status, write_status};
@@ -56,7 +58,7 @@ enum Commands {
     Test,
 
     /// Submit source code
-    Submit { source: String },
+    Submit,
 
     /// Watch submission status
     Watch,
@@ -138,13 +140,18 @@ fn main() -> Result<()> {
             })?;
         }
         Commands::Format {} => {
-            exec_workspace(pwd, |workspace: Workspace| dispatch_format(workspace))?;
+            exec_workspace(pwd, |workspace: Workspace| {
+                dispatch_format(&workspace, false)?;
+                Ok(())
+            })?;
         }
         Commands::Purge {} => dispatch_purge()?,
         Commands::Test => {
             exec_workspace(pwd, |workspace: Workspace| dispatch_test(workspace))?;
         }
-        Commands::Submit { source } => {}
+        Commands::Submit {} => {
+            exec_workspace(pwd, |workspace: Workspace| dispatch_submit(workspace))?;
+        }
         Commands::Watch => {}
     }
 

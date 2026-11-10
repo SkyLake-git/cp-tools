@@ -57,7 +57,7 @@ pub static SESSION_COOKIE: LazyLock<String> = LazyLock::new(|| {
         .expect("failed to fetch atcoder credentials")
         .revel_session;
 
-    format!("REVEL_SESSION={}", session.expose_secret()).to_owned()
+    make_cookie_from(&session)
 });
 pub static SESSION_CSRF_TOKEN: LazyLock<String> = LazyLock::new(|| {
     let session = fetch_atcoder()

@@ -11,7 +11,7 @@ use crate::modern_log::{GradientTick, gradient_string, status};
 use crate::tester::judge::TestResult;
 use crate::usecase::test::TestProgressEvent;
 use crate::usecase::workspace::Workspace;
-use crate::usecase::{start, test};
+use crate::usecase::{start, submit, test};
 use crate::utils::touch_files_relative;
 use anyhow::bail;
 use arboard::Clipboard;
@@ -146,7 +146,7 @@ pub fn dispatch_purge() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn dispatch_format(workspace: Workspace) -> anyhow::Result<()> {
+pub fn dispatch_format(workspace: &Workspace, manual: bool) -> anyhow::Result<String> {
     if !fs::exists(&workspace.settings.paths.source)? {
         bail!("source file doesn't exists");
     }
@@ -170,26 +170,41 @@ pub fn dispatch_format(workspace: Workspace) -> anyhow::Result<()> {
         format!("formatted code in {took_ms}ms"),
     );
 
-    match &workspace.settings.format.out.method {
-        FormatOutMethod::Clipboard => {
-            let mut clip = Clipboard::new()?;
-            clip.set_text(arranged_source_code)?;
-            status("Succeeded".bright_green().bold(), "copied to clipboard")
-        }
-        FormatOutMethod::File => {
-            if workspace.settings.format.out.target_file.is_none() {
-                status(
-                    "Failed".bright_red().bold(),
-                    "to write formatted code to file: file is none (please specify path `format.out.target_file`)",
-                )
-            } else {
-                fs::write(
-                    &workspace.settings.format.out.target_file.unwrap(),
-                    arranged_source_code,
-                )?;
-                status("Succeeded".bright_green().bold(), "wrote to file")
+    if !manual {
+        match &workspace.settings.format.out.method {
+            FormatOutMethod::Clipboard => {
+                let mut clip = Clipboard::new()?;
+                clip.set_text(&arranged_source_code)?;
+                status("Succeeded".bright_green().bold(), "copied to clipboard")
+            }
+            FormatOutMethod::File => {
+                if let Some(target_file) = workspace.settings.format.out.target_file.to_owned() {
+                    fs::write(target_file, &arranged_source_code)?;
+                    status("Succeeded".bright_green().bold(), "wrote to file")
+                } else {
+                    status(
+                        "Failed".bright_red().bold(),
+                        "to write formatted code to file: file is none (please specify path `format.out.target_file`)",
+                    )
+                }
             }
         }
+    }
+
+    Ok(arranged_source_code)
+}
+
+pub fn dispatch_submit(mut workspace: Workspace) -> anyhow::Result<()> {
+    let source_code = dispatch_format(&workspace, true)?;
+    status("Submitting".bright_green().bold(), "the source code");
+    if submit::run(&mut workspace, &source_code)? {
+        status("Successfully".bright_green().bold(), "submitted");
+        // todo: watch
+    } else {
+        status(
+            "Failed".bright_red().bold(),
+            "to submit, make sure you're participating in a contest",
+        )
     }
 
     Ok(())
