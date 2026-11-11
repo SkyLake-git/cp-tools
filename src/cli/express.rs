@@ -1,5 +1,9 @@
+use crate::def::submission::Submission;
 use crate::def::testcase::{TestcaseResult, Token};
+use chrono::{Local, TimeZone};
+use dialoguer::console::{Alignment, pad_str};
 use owo_colors::OwoColorize;
+use unicode_width::UnicodeWidthStr;
 
 pub fn print_testcase_result(res: TestcaseResult) {
     println!(
@@ -54,4 +58,53 @@ pub fn print_testcase_result(res: TestcaseResult) {
         print!("{}", res.stderr);
     }
     println!();
+}
+
+pub fn print_submissions(submissions: &Vec<Submission>) {
+    let mut max_sizes = vec![0; 5];
+    let mut contents = Vec::new();
+    let alignments = vec![
+        Alignment::Left,
+        Alignment::Left,
+        Alignment::Right,
+        Alignment::Right,
+        Alignment::Left,
+    ];
+
+    for submission in submissions {
+        let created = Local
+            .timestamp_opt(submission.created, 0)
+            .unwrap()
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string();
+
+        let content = vec![
+            created,
+            submission.problem.clone(),
+            submission.execution_time.clone().to_string() + " ms",
+            submission.memory_usage.clone().to_string() + " KiB",
+            submission.result.clone().to_string(),
+        ];
+
+        for (i, value) in content.iter().enumerate() {
+            let visible = dialoguer::console::strip_ansi_codes(value).into_owned();
+            let width = UnicodeWidthStr::width(visible.as_str());
+            max_sizes[i] = max_sizes[i].max(width);
+        }
+
+        contents.push(content);
+    }
+
+    for content in contents {
+        print!("┃ ");
+
+        let padded: Vec<String> = content
+            .iter()
+            .zip(&max_sizes)
+            .zip(&alignments)
+            .map(|((value, &width), &align)| pad_str(value, width, align, None).into_owned())
+            .collect();
+
+        println!("{} ┃", padded.join(" ┃ "));
+    }
 }

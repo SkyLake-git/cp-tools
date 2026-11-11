@@ -11,6 +11,7 @@ pub struct Settings {
     pub format: FormatSettings,
     pub tester: TesterSettings,
     pub atcoder: AtCoderSettings,
+    pub validation: ValidationSettings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,7 +60,6 @@ pub struct CppSettings {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct TesterSettings {
-    /// 問題の実行時間制限にマージン分追加する
     pub timeout_margin: u128,
     pub ignore_trailing_whitespace: bool,
     pub error_threshold: f64,
@@ -68,7 +68,22 @@ pub struct TesterSettings {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct AtCoderSettings {
-    pub watch_interval_seconds: u64,
+    pub watch_interval_millis: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ValidationSettings {
+    pub git: ValidationGitSettings,
+    pub check_same_submission: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ValidationGitSettings {
+    pub check_uncommitted_changes: bool,
+    pub check_unpushed_commits: bool,
+    pub target_paths: Vec<PathBuf>,
 }
 
 impl Default for Settings {
@@ -79,6 +94,7 @@ impl Default for Settings {
             format: FormatSettings::default(),
             tester: TesterSettings::default(),
             atcoder: AtCoderSettings::default(),
+            validation: ValidationSettings::default(),
         }
     }
 }
@@ -143,7 +159,26 @@ impl Default for TesterSettings {
 impl Default for AtCoderSettings {
     fn default() -> Self {
         Self {
-            watch_interval_seconds: 2,
+            watch_interval_millis: 2000,
+        }
+    }
+}
+
+impl Default for ValidationSettings {
+    fn default() -> Self {
+        Self {
+            git: ValidationGitSettings::default(),
+            check_same_submission: true,
+        }
+    }
+}
+
+impl Default for ValidationGitSettings {
+    fn default() -> Self {
+        Self {
+            check_uncommitted_changes: true,
+            check_unpushed_commits: true,
+            target_paths: vec![],
         }
     }
 }

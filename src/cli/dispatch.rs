@@ -1,4 +1,4 @@
-use crate::cli::express::print_testcase_result;
+use crate::cli::express::{print_submissions, print_testcase_result};
 use crate::config::settings::FormatOutMethod;
 use crate::constants::{
     CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, SMOOTH_PROGRESS_CHARS, assume_home_dir,
@@ -11,7 +11,7 @@ use crate::modern_log::{GradientTick, gradient_string, status};
 use crate::tester::judge::TestResult;
 use crate::usecase::test::TestProgressEvent;
 use crate::usecase::workspace::Workspace;
-use crate::usecase::{start, submit, test};
+use crate::usecase::{start, submit, test, watch};
 use crate::utils::touch_files_relative;
 use anyhow::bail;
 use arboard::Clipboard;
@@ -247,7 +247,7 @@ pub fn dispatch_test(workspace: &Workspace) -> anyhow::Result<bool> {
                 if elapsed_ms >= suite.time_limit {
                     res = TestResult::TimeLimitExceeded;
                 } else {
-                    res = TestResult::WaitingJudge;
+                    res = TestResult::WaitingForJudge;
                 }
 
                 let judge_msg = format!(
@@ -300,4 +300,12 @@ pub fn dispatch_test(workspace: &Workspace) -> anyhow::Result<bool> {
     }
 
     Ok(accepted_count == head_results.len())
+}
+
+pub fn dispatch_watch(workspace: &Workspace, persistent: bool) -> anyhow::Result<()> {
+    Ok(watch::run(&workspace, persistent, |submissions| {
+        print_submissions(&submissions);
+
+        println!();
+    })?)
 }

@@ -12,7 +12,7 @@ pub mod utils;
 
 use crate::atcoder::session::{is_logged_in, make_cookie_from};
 use crate::cli::dispatch::{
-    dispatch_format, dispatch_purge, dispatch_start, dispatch_submit, dispatch_test,
+    dispatch_format, dispatch_purge, dispatch_start, dispatch_submit, dispatch_test, dispatch_watch,
 };
 use crate::config::credentials::{AtCoderCredentials, delete_atcoder, save_atcoder};
 use crate::constants::assume_project_dir;
@@ -159,7 +159,9 @@ fn main() -> Result<()> {
                 Ok(())
             })?;
         }
-        Commands::Watch => {}
+        Commands::Watch => {
+            exec_workspace(pwd, |workspace: Workspace| dispatch_watch(&workspace, true))?;
+        }
     }
 
     Ok(())

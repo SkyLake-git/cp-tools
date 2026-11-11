@@ -52,6 +52,41 @@ pub fn get_atcoder_submission_url(task_id: &str) -> anyhow::Result<Url> {
         .join("submit/")?)
 }
 
+pub fn get_atcoder_submissions_me_url(task_id: &str) -> anyhow::Result<Url> {
+    let contest_id = task_id.rsplit_once('_').expect("invalid task ID").0;
+
+    Ok(ATCODER_DOMAIN
+        .join("contests/")?
+        .join(&format!("{}/", contest_id))?
+        .join("submissions/")?
+        .join("me/")?)
+}
+pub fn get_atcoder_submissions_json_url(
+    task_id: &str,
+    submission_ids: &Vec<u64>,
+) -> anyhow::Result<Url> {
+    let contest_id = task_id.rsplit_once('_').expect("invalid task ID").0;
+
+    let mut url = ATCODER_DOMAIN
+        .join("contests/")?
+        .join(&format!("{}/", contest_id))?
+        .join("submissions/")?
+        .join("me/")?
+        .join("status/")?
+        .join("json/")?;
+
+    {
+        let mut query = url.query_pairs_mut();
+        query.append_pair("reload", "true");
+
+        for submission_id in submission_ids {
+            query.append_pair("sids[]", &submission_id.to_string());
+        }
+    }
+
+    Ok(url)
+}
+
 pub static SESSION_COOKIE: LazyLock<String> = LazyLock::new(|| {
     let session = fetch_atcoder()
         .expect("failed to fetch atcoder credentials")

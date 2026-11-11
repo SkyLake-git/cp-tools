@@ -1,26 +1,56 @@
 use crate::def::testcase::TestcaseUnit;
 use owo_colors::OwoColorize;
+use serde::Serialize;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 pub enum TestResult {
-    WaitingJudge,
+    WaitingForJudge,
     Accepted,
     WrongAnswer,
     RuntimeError,
     TimeLimitExceeded,
     MemoryLimitExceeded,
+    CompileError,
+    // irregular results
+    OutputLimitExceeded,
+    InternalError,
+    WaitingForRejudge,
 }
 
 impl Display for TestResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TestResult::WaitingJudge => write!(f, "{}", " WJ ".bright_black().reversed()),
+            TestResult::WaitingForJudge => write!(f, "{}", " WJ ".bright_black().reversed()),
             TestResult::Accepted => write!(f, "{}", " AC ".bright_green().reversed()),
             TestResult::WrongAnswer => write!(f, "{}", " WA ".bright_yellow().reversed()),
             TestResult::RuntimeError => write!(f, "{}", " RE ".bright_yellow().reversed()),
             TestResult::TimeLimitExceeded => write!(f, "{}", " TLE ".bright_yellow().reversed()),
             TestResult::MemoryLimitExceeded => write!(f, "{}", " MLE ".bright_yellow().reversed()),
+            TestResult::CompileError => write!(f, "{}", " CE ".bright_yellow().reversed()),
+            TestResult::OutputLimitExceeded => write!(f, "{}", " OLE ".bright_red().reversed()),
+            TestResult::InternalError => write!(f, "{}", " IE ".bright_red().reversed()),
+            TestResult::WaitingForRejudge => write!(f, "{}", " WR ".bright_black().reversed()),
+        }
+    }
+}
+
+impl TryFrom<String> for TestResult {
+    type Error = ();
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "AC" => Ok(TestResult::Accepted),
+            "WA" => Ok(TestResult::WrongAnswer),
+            "TLE" => Ok(TestResult::TimeLimitExceeded),
+            "MLE" => Ok(TestResult::MemoryLimitExceeded),
+            "RE" => Ok(TestResult::RuntimeError),
+            "CE" => Ok(TestResult::CompileError),
+            "WJ" => Ok(TestResult::WaitingForJudge),
+            "OLE" => Ok(TestResult::OutputLimitExceeded),
+            "IE" => Ok(TestResult::InternalError),
+            "WR" => Ok(TestResult::WaitingForRejudge),
+            _ => Err(()),
         }
     }
 }
