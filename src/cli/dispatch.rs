@@ -1,4 +1,4 @@
-use crate::cli::express::{print_submissions, print_testcase_result};
+use crate::cli::express::{make_ascii_escape_move, print_submissions, print_testcase_result};
 use crate::config::settings::FormatOutMethod;
 use crate::constants::{
     CPP_FACADE_DIR_NAME, PROJECT_DIR_NAME, SMOOTH_PROGRESS_CHARS, assume_home_dir,
@@ -19,6 +19,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use std::cell::Cell;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -303,9 +304,36 @@ pub fn dispatch_test(workspace: &Workspace) -> anyhow::Result<bool> {
 }
 
 pub fn dispatch_watch(workspace: &Workspace, persistent: bool) -> anyhow::Result<()> {
-    Ok(watch::run(&workspace, persistent, |submissions| {
-        print_submissions(&submissions);
+    let mut printed = false;
+    let mut previous_size: usize = 0;
+    let mut count = 0;
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(ProgressStyle::with_template("{msg} ({prefix})")?);
+    let handler = spinner.enable_gradient_tick("Watching...", Duration::from_millis(20));
+    watch::run(&workspace, persistent, |submissions| {
+        spinner.suspend(|| {
+            if printed {
+                print!("{}", make_ascii_escape_move(previous_size as i32 + 1));
+                print!("{}", "\r\x1b[0J");
+                std::io::stdout().flush().ok();
+            }
+            print_submissions(
+                &submissions,
+                terminal_size::terminal_size()
+                    .expect("failed to get terminal size")
+                    .1
+                    .0 as usize,
+            );
+            println!();
+            std::io::stdout().flush().ok();
+        });
 
-        println!();
-    })?)
+        previous_size = submissions.len();
+        printed = true;
+        count += 1;
+        spinner.set_prefix(format!("updated {} times", count));
+        spinner.tick();
+    })?;
+    drop(handler);
+    Ok(())
 }

@@ -5,6 +5,10 @@ use dialoguer::console::{Alignment, pad_str};
 use owo_colors::OwoColorize;
 use unicode_width::UnicodeWidthStr;
 
+pub fn make_ascii_escape_move(row: i32) -> String {
+    let suf = if row > 0 { "F" } else { "E" };
+    format!("\x1b[{}{}", row.abs(), suf)
+}
 pub fn print_testcase_result(res: TestcaseResult) {
     println!(
         "┏━ {}",
@@ -60,7 +64,7 @@ pub fn print_testcase_result(res: TestcaseResult) {
     println!();
 }
 
-pub fn print_submissions(submissions: &Vec<Submission>) {
+pub fn print_submissions(submissions: &Vec<Submission>, limit: usize) {
     let mut max_sizes = vec![0; 5];
     let mut contents = Vec::new();
     let alignments = vec![
@@ -93,6 +97,10 @@ pub fn print_submissions(submissions: &Vec<Submission>) {
         }
 
         contents.push(content);
+
+        if contents.len() >= limit {
+            break;
+        }
     }
 
     for content in contents {

@@ -25,6 +25,8 @@ fn run_atcoder(
     let suite = workspace.fetch_test_suite()?;
 
     let mut submissions = fetch_submissions(&suite.problem_id)?;
+    let mut fresh = true;
+    let mut silent_count = 0;
 
     loop {
         let watch_submission_ids: Vec<u64> = submissions
@@ -34,7 +36,8 @@ fn run_atcoder(
             .collect();
 
         let mut waiting_count = 0usize;
-        if !watch_submission_ids.is_empty() || true {
+        if !watch_submission_ids.is_empty() || fresh || silent_count >= 3 {
+            fresh = false;
             let queries =
                 fetch_submission_update_queries(&suite.problem_id, &watch_submission_ids)?;
             waiting_count += watch_submission_ids.len();
@@ -51,9 +54,12 @@ fn run_atcoder(
                     }
                 }
             }
-        }
 
-        on_update(&submissions);
+            on_update(&submissions);
+            silent_count = 0;
+        } else {
+            silent_count += 1;
+        }
 
         if !watch_submission_ids.is_empty() && waiting_count == 0 && !persistent {
             break;
