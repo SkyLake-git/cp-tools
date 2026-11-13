@@ -58,7 +58,8 @@ pub fn get_atcoder_submissions_me_url(task_id: &str) -> anyhow::Result<Url> {
     Ok(ATCODER_DOMAIN
         .join("contests/")?
         .join(&format!("{}/", contest_id))?
-        .join("submissions/")?)
+        .join("submissions/")?
+        .join("me/")?)
 }
 pub fn get_atcoder_submissions_json_url(
     task_id: &str,
