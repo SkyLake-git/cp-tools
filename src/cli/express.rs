@@ -1,5 +1,7 @@
+use crate::constants::format_progress;
 use crate::def::submission::Submission;
 use crate::def::testcase::{TestcaseResult, Token};
+use crate::tester::judge::TestResult;
 use chrono::{Local, TimeZone};
 use dialoguer::console::{Alignment, pad_str};
 use owo_colors::OwoColorize;
@@ -82,12 +84,46 @@ pub fn print_submissions(submissions: &Vec<Submission>, limit: usize) {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
 
+        let mut res = pad_str(
+            submission.result.clone().to_string().as_str(),
+            5,
+            Alignment::Right,
+            None,
+        )
+        .into_owned()
+            + " ";
+        if submission.progress_current.is_some() && submission.progress_max.is_some() {
+            res += format!(
+                "{}/{} {}",
+                submission.progress_current.unwrap(),
+                submission.progress_max.unwrap(),
+                format_progress(
+                    submission.progress_current.unwrap(),
+                    submission.progress_max.unwrap(),
+                    10
+                )
+            )
+            .as_str();
+        }
+
         let content = vec![
             created,
             submission.problem.clone(),
-            submission.execution_time.clone().to_string() + " ms",
-            submission.memory_usage.clone().to_string() + " KiB",
-            submission.result.clone().to_string(),
+            if submission.progress_current.is_none()
+                && submission.result != TestResult::WaitingForJudge
+            {
+                submission.execution_time.clone().to_string() + " ms"
+            } else {
+                "".to_owned()
+            },
+            if submission.progress_current.is_none()
+                && submission.result != TestResult::WaitingForJudge
+            {
+                submission.memory_usage.clone().to_string() + " KiB"
+            } else {
+                "".to_owned()
+            },
+            res,
         ];
 
         for (i, value) in content.iter().enumerate() {

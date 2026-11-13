@@ -8,15 +8,10 @@ use crate::def::testcase::Testcase;
 use crate::tester::judge::TestResult;
 use crate::tester::suite::TestSuite;
 use anyhow::{Context, anyhow, bail};
-use regex::Regex;
 use reqwest::Url;
 use scraper::{ElementRef, Html, Selector};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use std::sync::LazyLock;
-
-static PROGRESS_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(.+?)\s+(\d+)/(\d+)$").unwrap());
 
 fn parse_resource_value(text: &str, unit: &str) -> anyhow::Result<u32> {
     let value = text
@@ -199,28 +194,52 @@ pub fn fetch_submission_update_queries(
     decode_submission_json(&data)
 }
 
-fn parse_result(text: &str) -> anyhow::Result<(TestResult, Option<u32>, Option<u32>)> {
-    use anyhow::{Context, anyhow};
+fn parse_result(input: &str) -> anyhow::Result<(TestResult, Option<u32>, Option<u32>)> {
+    let input = input.trim();
 
-    let (result_text, progress_current, progress_max) =
-        if let Some(captures) = PROGRESS_REGEX.captures(text.trim()) {
-            (
-                captures[1].trim().to_owned(),
-                Some(
-                    captures[2]
-                        .parse::<u32>()
-                        .context("Invalid progress current")?,
-                ),
-                Some(captures[3].parse::<u32>().context("Invalid progress max")?),
-            )
-        } else {
-            (text.trim().to_owned(), None, None)
-        };
+    if input.is_empty() {
+        bail!("Empty result");
+    }
 
-    let result = TestResult::try_from(result_text.to_owned())
-        .map_err(|_| anyhow!("Unknown result: {}", result_text))?;
+    let mut parts = input.split_whitespace();
+    let first = parts.next().unwrap();
 
-    Ok((result, progress_current, progress_max))
+    if let Some((current, max)) = first.split_once('/') {
+        let progress_current = current
+            .parse::<u32>()
+            .map_err(|_| anyhow!("Invalid progress current: {current}"))?;
+
+        let progress_max = max
+            .parse::<u32>()
+            .map_err(|_| anyhow!("Invalid progress max: {max}"))?;
+
+        if progress_max == 0 || progress_current > progress_max {
+            bail!("Invalid progress: {first}");
+        }
+
+        let result = parts.next().unwrap_or("WJ");
+
+        if parts.next().is_some() {
+            bail!("Invalid result format: {input}");
+        }
+
+        return Ok((
+            TestResult::try_from(result.to_owned())
+                .map_err(|_| anyhow!("Unknown result: {}", result))?,
+            Some(progress_current),
+            Some(progress_max),
+        ));
+    }
+
+    if parts.next().is_some() {
+        bail!("Invalid result format: {input}");
+    }
+
+    Ok((
+        TestResult::try_from(first.to_owned()).map_err(|_| anyhow!("Unknown result: {}", first))?,
+        None,
+        None,
+    ))
 }
 
 pub fn extract_submissions(html: &str) -> anyhow::Result<Vec<Submission>> {
@@ -251,10 +270,6 @@ pub fn extract_submissions(html: &str) -> anyhow::Result<Vec<Submission>> {
 
     for row in document.select(&row_selector) {
         let cells: Vec<_> = row.select(&td_selector).collect();
-
-        if cells.len() < 9 {
-            continue;
-        }
 
         // Submission ID
         let submission_id = row
@@ -295,20 +310,60 @@ pub fn extract_submissions(html: &str) -> anyhow::Result<Vec<Submission>> {
             .context("Invalid score")?;
 
         // Result (7th column)
-        let result_text = cells[6]
-            .select(&span_selector)
+        let waiting_judge = row
+            .select(
+                &Selector::parse("td.waiting-judge")
+                    .map_err(|e| anyhow!("Invalid waiting-judge selector: {e}"))?,
+            )
             .next()
-            .map(|span| span.text().collect::<String>().trim().to_string())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| cells[6].text().collect::<String>().trim().to_string());
+            .is_some();
 
-        let (result, progress_current, progress_max) = parse_result(&result_text)?;
+        let (result, progress_current, progress_max) = if waiting_judge {
+            let result_cell = cells
+                .iter()
+                .find(|cell| cell.value().classes().any(|class| class == "waiting-judge"))
+                .context("Missing waiting-judge column")?;
 
-        // Execution time
-        let execution_time = parse_resource_value(&cells[7].text().collect::<String>(), "ms")?;
+            let result_text = result_cell.text().collect::<String>().trim().to_string();
 
-        // Memory usage
-        let memory_usage = parse_resource_value(&cells[8].text().collect::<String>(), "KiB")?;
+            parse_result(&result_text)?
+        } else {
+            let result_cell = cells.get(6).context("Missing result column")?;
+
+            let result_text = result_cell
+                .select(&span_selector)
+                .next()
+                .map(|span| span.text().collect::<String>().trim().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| result_cell.text().collect::<String>().trim().to_string());
+
+            parse_result(&result_text)?
+        };
+
+        // Execution time and memory usage
+        let (execution_time, memory_usage) = if waiting_judge {
+            (0, 0)
+        } else {
+            let execution_time = parse_resource_value(
+                &cells
+                    .get(7)
+                    .context("Missing execution time column")?
+                    .text()
+                    .collect::<String>(),
+                "ms",
+            )?;
+
+            let memory_usage = parse_resource_value(
+                &cells
+                    .get(8)
+                    .context("Missing memory usage column")?
+                    .text()
+                    .collect::<String>(),
+                "KiB",
+            )?;
+
+            (execution_time, memory_usage)
+        };
 
         submissions.push(Submission {
             submission_id,
@@ -332,7 +387,13 @@ fn decode_submission_json(data: &Value) -> anyhow::Result<Vec<SubmissionUpdateQu
         .and_then(Value::as_object)
         .ok_or_else(|| anyhow!("Missing Result"))?;
 
-    let selector = Selector::parse("td").map_err(|e| anyhow!("Invalid selector: {e}"))?;
+    let td_selector = Selector::parse("td").map_err(|e| anyhow!("Invalid selector: {e}"))?;
+
+    let waiting_selector = Selector::parse("td.waiting-judge")
+        .map_err(|e| anyhow!("Invalid waiting-judge selector: {e}"))?;
+
+    let span_selector =
+        Selector::parse("span").map_err(|e| anyhow!("Invalid span selector: {e}"))?;
 
     let mut submissions = Vec::with_capacity(results.len());
 
@@ -349,22 +410,48 @@ fn decode_submission_json(data: &Value) -> anyhow::Result<Vec<SubmissionUpdateQu
         let document =
             Html::parse_document(&format!("<table><tbody><tr>{}</tr></tbody></table>", html));
 
-        let cells: Vec<String> = document
-            .select(&selector)
-            .map(|element| element.text().collect::<String>().trim().to_string())
-            .collect();
+        let cells: Vec<_> = document.select(&td_selector).collect();
 
-        if cells.len() != 3 {
-            bail!(
-                "Invalid HTML structure for submission {submission_id}: expected 3 cells, got {}",
-                cells.len()
-            );
-        }
+        let waiting_judge = document.select(&waiting_selector).next().is_some();
 
-        let (result, progress_current, progress_max) = parse_result(&cells[0])?;
+        let (result, progress_current, progress_max) = if waiting_judge {
+            let cell = cells
+                .iter()
+                .find(|cell| cell.value().classes().any(|class| class == "waiting-judge"))
+                .ok_or_else(|| {
+                    anyhow!("Missing waiting-judge cell for submission {submission_id}")
+                })?;
 
-        let execution_time = parse_resource_value(&cells[1], "ms")?;
-        let memory_usage = parse_resource_value(&cells[2], "KiB")?;
+            let result_text = cell.text().collect::<String>().trim().to_string();
+
+            parse_result(&result_text)?
+        } else {
+            if cells.len() != 3 {
+                bail!(
+                    "Invalid HTML structure for submission {submission_id}: expected 3 cells, got {}",
+                    cells.len()
+                );
+            }
+
+            let result_text = cells[0]
+                .select(&span_selector)
+                .next()
+                .map(|span| span.text().collect::<String>().trim().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| cells[0].text().collect::<String>().trim().to_string());
+
+            parse_result(&result_text)?
+        };
+
+        let (execution_time, memory_usage) = if waiting_judge {
+            (0, 0)
+        } else {
+            let execution_time = parse_resource_value(&cells[1].text().collect::<String>(), "ms")?;
+
+            let memory_usage = parse_resource_value(&cells[2].text().collect::<String>(), "KiB")?;
+
+            (execution_time, memory_usage)
+        };
 
         submissions.push(SubmissionUpdateQuery {
             submission_id: submission_id.parse::<u64>()?,

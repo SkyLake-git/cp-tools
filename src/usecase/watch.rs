@@ -1,6 +1,6 @@
-use crate::atcoder::scrape::{fetch_submission_update_queries, fetch_submissions};
+use crate::atcoder::scrape::fetch_submissions;
 use crate::def::contest_type::ContestType;
-use crate::def::submission::{Submission, apply_query};
+use crate::def::submission::Submission;
 use crate::tester::judge::TestResult;
 use crate::usecase::workspace::Workspace;
 use std::cmp::max;
@@ -23,45 +23,22 @@ fn run_atcoder(
     mut on_update: impl FnMut(&Vec<Submission>),
 ) -> anyhow::Result<()> {
     let suite = workspace.fetch_test_suite()?;
-
-    let mut submissions = fetch_submissions(&suite.problem_id)?;
-    let mut fresh = true;
-    let mut silent_count = 0;
+    let mut waiting = false;
 
     loop {
+        let submissions = fetch_submissions(&suite.problem_id)?;
         let watch_submission_ids: Vec<u64> = submissions
             .iter()
-            .filter(|a| a.result == TestResult::WaitingForJudge)
+            .filter(|a| a.progress_current.is_some() || a.result == TestResult::WaitingForJudge)
             .map(|a| a.submission_id)
             .collect();
 
-        let mut waiting_count = 0usize;
-        if !watch_submission_ids.is_empty() || fresh || silent_count >= 3 {
-            fresh = false;
-            let queries =
-                fetch_submission_update_queries(&suite.problem_id, &watch_submission_ids)?;
-            waiting_count += watch_submission_ids.len();
-
-            for q in queries {
-                if let Some(sub) = submissions
-                    .iter_mut()
-                    .find(|a| a.submission_id == q.submission_id)
-                {
-                    apply_query(sub, &q);
-
-                    if q.result == TestResult::Accepted && waiting_count > 0 {
-                        waiting_count -= 1;
-                    }
-                }
-            }
-
-            on_update(&submissions);
-            silent_count = 0;
-        } else {
-            silent_count += 1;
+        on_update(&submissions);
+        if !watch_submission_ids.is_empty() {
+            waiting = true;
         }
 
-        if !watch_submission_ids.is_empty() && waiting_count == 0 && !persistent {
+        if watch_submission_ids.is_empty() && waiting && !persistent {
             break;
         }
 

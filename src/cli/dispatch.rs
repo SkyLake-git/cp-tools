@@ -18,6 +18,7 @@ use arboard::Clipboard;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use std::cell::Cell;
+use std::cmp::min;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -311,24 +312,19 @@ pub fn dispatch_watch(workspace: &Workspace, persistent: bool) -> anyhow::Result
     spinner.set_style(ProgressStyle::with_template("{msg} ({prefix})")?);
     let handler = spinner.enable_gradient_tick("Watching...", Duration::from_millis(20));
     watch::run(&workspace, persistent, |submissions| {
+        let size = min(10, submissions.len());
         spinner.suspend(|| {
             if printed {
                 print!("{}", make_ascii_escape_move(previous_size as i32 + 1));
                 print!("{}", "\r\x1b[0J");
                 std::io::stdout().flush().ok();
             }
-            print_submissions(
-                &submissions,
-                terminal_size::terminal_size()
-                    .expect("failed to get terminal size")
-                    .1
-                    .0 as usize,
-            );
+            print_submissions(&submissions, size);
             println!();
             std::io::stdout().flush().ok();
         });
 
-        previous_size = submissions.len();
+        previous_size = size;
         printed = true;
         count += 1;
         spinner.set_prefix(format!("updated {} times", count));

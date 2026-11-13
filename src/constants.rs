@@ -47,3 +47,26 @@ pub fn assume_home_dir() -> PathBuf {
 pub fn assume_project_dir() {
     fs::create_dir(assume_home_dir().join(PROJECT_DIR_NAME)).ok();
 }
+
+pub fn format_progress(current: u32, max: u32, col: usize) -> String {
+    let ratio = current as f64 / max as f64;
+    let count = ((ratio * col as f64).floor() as usize).min(col);
+
+    let rem = ratio - count as f64 / col as f64;
+
+    let codes = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
+
+    let partial = if count < col {
+        let index = ((rem * col as f64) * 7.0).round() as usize;
+        codes[index.min(7)]
+    } else {
+        ""
+    };
+
+    format!(
+        "{}{}{}",
+        "█".repeat(count),
+        partial,
+        " ".repeat(col.saturating_sub(count + usize::from(!partial.is_empty()))),
+    )
+}
