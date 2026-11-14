@@ -20,6 +20,7 @@ pub struct GeneralSettings {
     pub contest_type: ContestType,
     pub log_level: String,
     pub language: Language,
+    pub workspace_delay_millis: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,6 +106,7 @@ impl Default for GeneralSettings {
             log_level: "info".into(),
             language: Language::None,
             contest_type: ContestType::AtCoder,
+            workspace_delay_millis: 0,
         }
     }
 }

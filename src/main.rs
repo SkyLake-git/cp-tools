@@ -25,6 +25,8 @@ use owo_colors::OwoColorize;
 use secrecy::SecretString;
 use std::env;
 use std::path::PathBuf;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[derive(Parser, Debug)]
 #[command(name = "cp-tools", version, about = "Competitive-Programming Tools")]
@@ -76,7 +78,13 @@ fn exec_workspace(
         );
         Ok(())
     } else {
-        f(workspace?)
+        let unwrapped = workspace?;
+        if unwrapped.settings.general.workspace_delay_millis > 0 {
+            sleep(Duration::from_millis(
+                (&unwrapped.settings.general.workspace_delay_millis).clone(),
+            ));
+        }
+        f(unwrapped)
     }
 }
 

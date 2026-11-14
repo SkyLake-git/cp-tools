@@ -25,9 +25,15 @@ impl Workspace {
     }
     pub fn load(path: PathBuf) -> anyhow::Result<Self> {
         let r = fs::read_to_string(path.join(PROJECT_DIR_NAME).join(WORKSPACE_SETTINGS_FN))?;
+        let data = toml::from_str(&r)?;
+        fs::write(
+            path.join(PROJECT_DIR_NAME).join(WORKSPACE_SETTINGS_FN),
+            toml::to_string(&data).expect("failed to serialize settings"),
+        )
+        .expect("failed to write settings");
         Ok(Self {
             path,
-            settings: toml::from_str(&r)?,
+            settings: data,
         })
     }
 

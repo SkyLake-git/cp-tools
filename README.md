@@ -2,16 +2,25 @@
 
 競技プログラミング用のツール群
 
+
+> [!IMPORTANT]
+> このプロジェクトは作成中 (WIP) であり、不具合や未実装の機能が含まれます。<br>
+
 # 設定項目
 
 ## 1. 一般設定
 
 ### `[general]`
 
-| キー           | 説明                       | デフォルト値 | 設定可能な値 |
-|----------------|----------------------------|--------------|--------------|
-| `contest_type` | コンテストサイトの種類     | `AtCoder`    | `AtCoder`    |
-| `language`     | 使用するプログラミング言語 | `"none"`     | `"cpp_gcc"`  |
+| キー                     | 説明                                                      | デフォルト値 | 設定可能な値 |
+|--------------------------|-----------------------------------------------------------|--------------|--------------|
+| `contest_type`           | コンテストサイトの種類                                    | `AtCoder`    | `AtCoder`    |
+| `language`               | 使用するプログラミング言語                                | `"none"`     | `"cpp_gcc"`  |
+| `workspace_delay_millis` | ワークスペースを使うコマンドの実行に遅延を発生させる (ms) | `0`          |              |
+
+> [!NOTE]
+> `workspace_delay_millis` は通常は使用しないでください。<br>
+> **特定の用途** のために使用されます
 
 ## 2. パス設定
 
@@ -26,10 +35,39 @@
 
 ### `[format]`
 
-| キー                     | 説明                                                                   | デフォルト値 | 例                                                                                                                                  |
-|--------------------------|------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `opt_begin_end`          | コメントを使用して指定範囲のコードのみを残す機能を有効にする           | `false`      | <pre><code>// compete BOF<br/>your code here<br/>// compete EOF<br/>the code entered here will be deleted</code></pre>              |
-| `opt_range_no_new_lines` | コメントを使用して指定範囲のコードをワンライナーにする機能を有効にする | `false`      | <pre><code>// compete BEGIN_NO_NEW_LINES<br/>the code entered here will be one-linered<br/>// compete END_NO_NEW_LINES</code></pre> |
+<table>
+  <thead>
+    <tr>
+      <th>キー</th>
+      <th>説明</th>
+      <th>デフォルト値</th>
+      <th>例</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>opt_begin_end</code></td>
+      <td>コメントを使用して指定範囲のコードのみを残す機能を有効にする</td>
+      <td><code>false</code></td>
+      <td>
+        <pre><code>// compete BOF
+your code here
+// compete EOF
+the code entered here will be deleted</code></pre>
+      </td>
+    </tr>
+    <tr>
+      <td><code>opt_range_no_new_lines</code></td>
+      <td>コメントを使用して指定範囲のコードをワンライナーにする機能を有効にする</td>
+      <td><code>false</code></td>
+      <td>
+        <pre><code>// compete BEGIN_NO_NEW_LINES
+the code entered here will be one-linered
+// compete END_NO_NEW_LINES</code></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### `[format.out]`
 
@@ -70,7 +108,8 @@
 
 ## 6. 検証設定
 
-ルール違反やマナー違反になってしまう行為を可能な限り防ぐ機能群です
+ルール違反やマナー違反になってしまう行為を可能な限り防ぐ機能群です。<br>
+現在実装されていません (wip)
 
 ### `[validation]`
 
