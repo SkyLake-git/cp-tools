@@ -301,6 +301,15 @@ pub fn extract_submissions(html: &str) -> anyhow::Result<Vec<Submission>> {
             .map(|a| a.text().collect::<String>().trim().to_string())
             .context("Missing problem name")?;
 
+        let task_id = row
+            .select(&problem_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|href| href.rsplit('/').next())
+            .filter(|s| !s.is_empty())
+            .context("Missing task ID")?
+            .to_string();
+
         // Score (5th column)
         let score = cells[4]
             .text()
@@ -369,6 +378,7 @@ pub fn extract_submissions(html: &str) -> anyhow::Result<Vec<Submission>> {
             submission_id,
             created,
             problem,
+            task_id,
             result,
             score,
             execution_time,

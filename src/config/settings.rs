@@ -62,7 +62,6 @@ pub struct CppSettings {
 #[serde(default, deny_unknown_fields)]
 pub struct TesterSettings {
     pub timeout_margin: u128,
-    pub ignore_trailing_whitespace: bool,
     pub error_threshold: f64,
 }
 
@@ -85,6 +84,7 @@ pub struct ValidationGitSettings {
     pub check_uncommitted_changes: bool,
     pub check_unpushed_commits: bool,
     pub target_paths: Vec<PathBuf>,
+    pub run_every_submit: bool,
 }
 
 impl Default for Settings {
@@ -152,7 +152,6 @@ impl Default for TesterSettings {
     fn default() -> Self {
         Self {
             timeout_margin: 500,
-            ignore_trailing_whitespace: true,
             error_threshold: 1e-6,
         }
     }
@@ -181,6 +180,7 @@ impl Default for ValidationGitSettings {
             check_uncommitted_changes: true,
             check_unpushed_commits: true,
             target_paths: vec![],
+            run_every_submit: false,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::atcoder::session::{SESSION_COOKIE, SESSION_CSRF_TOKEN, get_atcoder_submission_url};
+use crate::atcoder::session::{SESSION_COOKIE, SESSION_CSRF_TOKEN, get_atcoder_submit_url};
 use crate::constants::make_http_client;
 use crate::def::language::Language;
 use anyhow::Context;
@@ -30,7 +30,7 @@ pub fn submit(problem_id: &str, language_id: u64, source_code: &str) -> anyhow::
         source_code: source_code.to_owned(),
     };
     let response = make_http_client(false)
-        .post(get_atcoder_submission_url(problem_id)?)
+        .post(get_atcoder_submit_url(problem_id)?)
         .header(reqwest::header::COOKIE, SESSION_COOKIE.as_str())
         .form(&body)
         .send()

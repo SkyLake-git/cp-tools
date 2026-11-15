@@ -6,6 +6,7 @@ pub struct Submission {
     pub submission_id: u64,
     pub created: i64,
     pub problem: String,
+    pub task_id: String,
     pub result: TestResult,
     pub score: u32,
     pub execution_time: u32,

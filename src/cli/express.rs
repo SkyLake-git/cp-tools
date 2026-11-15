@@ -1,6 +1,8 @@
+use crate::atcoder::session::get_atcoder_submission_url;
 use crate::constants::format_progress;
 use crate::def::submission::Submission;
 use crate::def::testcase::{TestcaseResult, Token};
+use crate::modern_log::format_link;
 use crate::tester::judge::TestResult;
 use chrono::{Local, TimeZone};
 use dialoguer::console::{Alignment, pad_str};
@@ -18,7 +20,7 @@ pub fn print_testcase_result(res: TestcaseResult) {
             "{}: {} {}",
             format!("{}", res.testcase.label).bright_white(),
             res.result,
-            format!("{:>4}ms / {} ms", res.execution_time, res.time_limit).cyan()
+            format!(" {:>4}ms / {} ms", res.execution_time, res.time_limit).cyan()
         )
     );
 
@@ -69,6 +71,7 @@ pub fn print_testcase_result(res: TestcaseResult) {
 pub fn print_submissions(submissions: &Vec<Submission>, limit: usize) {
     let mut max_sizes = vec![0; 5];
     let mut contents = Vec::new();
+    let mut urls = Vec::new();
     let alignments = vec![
         Alignment::Left,
         Alignment::Left,
@@ -133,15 +136,17 @@ pub fn print_submissions(submissions: &Vec<Submission>, limit: usize) {
         }
 
         contents.push(content);
+        urls.push(
+            get_atcoder_submission_url(&submission.task_id, submission.submission_id)
+                .expect("failed get submission url"),
+        );
 
         if contents.len() >= limit {
             break;
         }
     }
 
-    for content in contents {
-        print!("┃ ");
-
+    for (content, url) in contents.iter().zip(urls) {
         let padded: Vec<String> = content
             .iter()
             .zip(&max_sizes)
@@ -149,6 +154,7 @@ pub fn print_submissions(submissions: &Vec<Submission>, limit: usize) {
             .map(|((value, &width), &align)| pad_str(value, width, align, None).into_owned())
             .collect();
 
-        println!("{} ┃", padded.join(" ┃ "));
+        let s = "┃ ".to_owned() + padded.join(" ┃ ").as_str() + " ┃";
+        println!("{}", format_link(&s, url.as_str()));
     }
 }

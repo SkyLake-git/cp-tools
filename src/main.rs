@@ -9,12 +9,13 @@ pub mod modern_log;
 pub mod tester;
 pub mod usecase;
 pub mod utils;
+pub mod validate;
 
 use crate::atcoder::session::{is_logged_in, make_cookie_from};
 use crate::cli::dispatch::{
     dispatch_format, dispatch_purge, dispatch_start, dispatch_submit, dispatch_test, dispatch_watch,
 };
-use crate::config::credentials::{AtCoderCredentials, delete_atcoder, save_atcoder};
+use crate::config::credentials::{AtCoderCredentials, delete_atcoder, fetch_atcoder, save_atcoder};
 use crate::constants::assume_project_dir;
 use crate::modern_log::{format_status, recv_input, status, write_status};
 use crate::usecase::workspace::Workspace;
@@ -42,7 +43,10 @@ enum Commands {
     Init,
 
     /// Login to competition site
-    Login,
+    Login {
+        #[arg(short, long)]
+        dotenv: bool,
+    },
 
     /// Logout from competition site
     Logout,
@@ -90,6 +94,7 @@ fn exec_workspace(
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+    dotenvy::dotenv().ok();
     assume_project_dir();
 
     let pwd = env::current_dir().expect("failed to get current dir");
@@ -98,7 +103,14 @@ fn main() -> Result<()> {
             Workspace::init(pwd);
             status("Created".bright_green().bold(), "workspace at pwd");
         }
-        Commands::Login => {
+        Commands::Login { dotenv } => {
+            if let Ok(_) = fetch_atcoder() {
+                status(
+                    "Failed".bright_red().bold(),
+                    "You already logged in to contest, to login to another user: run `logout`",
+                );
+                return Ok(());
+            }
             let session: SecretString = SecretString::from(
                 Password::new()
                     .with_prompt(format_status(
@@ -113,7 +125,7 @@ fn main() -> Result<()> {
             if let Ok(logged_in) = is_logged_in(make_cookie_from(&session))
                 && logged_in
             {
-                save_atcoder(AtCoderCredentials::new(session))?;
+                save_atcoder(AtCoderCredentials::new(session), dotenv)?;
                 status(
                     "Succeeded".bright_green().bold(),
                     "saved your session token",

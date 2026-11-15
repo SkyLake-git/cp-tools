@@ -43,13 +43,23 @@ pub fn get_atcoder_task_url(task_id: &str) -> anyhow::Result<Url> {
         .join(&format!("{}/", task_id))?)
 }
 
-pub fn get_atcoder_submission_url(task_id: &str) -> anyhow::Result<Url> {
+pub fn get_atcoder_submit_url(task_id: &str) -> anyhow::Result<Url> {
     let contest_id = task_id.rsplit_once('_').expect("invalid task ID").0;
 
     Ok(ATCODER_DOMAIN
         .join("contests/")?
         .join(&format!("{}/", contest_id))?
         .join("submit/")?)
+}
+
+pub fn get_atcoder_submission_url(task_id: &str, submission_id: u64) -> anyhow::Result<Url> {
+    let contest_id = task_id.rsplit_once('_').expect("invalid task ID").0;
+
+    Ok(ATCODER_DOMAIN
+        .join("contests/")?
+        .join(&format!("{}/", contest_id))?
+        .join("submissions/")?
+        .join(format!("{}/", submission_id.to_string()).as_str())?)
 }
 
 pub fn get_atcoder_submissions_me_url(task_id: &str) -> anyhow::Result<Url> {

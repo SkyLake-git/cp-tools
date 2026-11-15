@@ -40,6 +40,14 @@ pub fn assume_terminal_size() -> u16 {
     terminal_size::terminal_size().unwrap().0.0
 }
 
+pub fn format_link(text: &str, url: &str) -> String {
+    if supports_hyperlinks::on(Stream::Stdout) {
+        format!("\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\", url, text)
+    } else {
+        text.to_owned()
+    }
+}
+
 pub fn prefix_lines(s: &str, prefix: &str) -> String {
     s.lines()
         .map(|line| format!("{prefix}{line}"))
@@ -125,6 +133,7 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
+use supports_hyperlinks::Stream;
 
 pub trait GradientTick {
     fn enable_gradient_tick(

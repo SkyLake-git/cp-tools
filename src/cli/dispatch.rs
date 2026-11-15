@@ -208,6 +208,7 @@ pub fn dispatch_submit(workspace: &Workspace, no_test: bool) -> anyhow::Result<(
     status("Submitting".bright_green().bold(), "the source code");
     if submit::run(&workspace, &source_code)? {
         status("Successfully".bright_green().bold(), "submitted");
+        println!();
         dispatch_watch(&workspace, false)?;
     } else {
         status(
