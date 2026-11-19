@@ -214,7 +214,8 @@ pub fn dispatch_submit(workspace: &Workspace, no_test: bool) -> anyhow::Result<(
         status(
             "Failed".bright_red().bold(),
             "to submit, make sure you're participating in a contest",
-        )
+        );
+        dispatch_format(&workspace, false)?;
     }
 
     Ok(())
